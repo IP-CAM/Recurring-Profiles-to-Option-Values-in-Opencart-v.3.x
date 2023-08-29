@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>Recurring options associate</name>
+    <version>1.0.0</version>
+    <code>#RO-3.x</code>
+    <author>khnaz35</author>
+    <link>mailto:khnaz35@gmail.com</link>
+
+    <file path="admin/language/*/catalog/product.php">
+        <operation error="log">
+            <search><![CDATA[// Text]]></search>
+            <add position="after"><![CDATA[
+        // Recurring
+        $_['entry_option_recurring'] = 'Select Recurring profile';
+        ]]>            </add>
+        </operation>
+    </file>
+
+    <file path="admin/controller/catalog/product.php">
+        <operation error="log">
+            <search><![CDATA[if (isset($product_option['product_option_value'])) {]]></search>
+            <add position="after" offset="1"><![CDATA[
+        // Recurring
+        $recurring_profile = $this->model_catalog_product->getRecurringProfile($product_option_value['product_option_value_id']);
+        ]]>            </add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA['weight' => $product_option_value['weight'],]]></search>
+            <add position="after"><![CDATA[
+        // Recurring
+        'recurring_profile' => $recurring_profile,
+        ]]>            </add>
+        </operation>
+    </file>
+
+    <file path="admin/model/catalog/product.php">
+        <operation error="skip">
+            <search><![CDATA[public function getTotalProductsByLayoutId($layout_id) {]]></search>
+            <add position="before"><![CDATA[
+        // Recurring
+        public function getRecurringProfile($product_option_value_id) {
+            // your database query logic here
+        }
+        ]]>            </add>
+        </operation>
+    </file>
+
+    <file path="admin/view/template/catalog/product_form.twig">
+        <operation error="log">
+            <search><![CDATA[<table id="option-value{{ option_row }}" class="table table-striped table-bordered table-hover">]]></search>
+            <add position="after" offset="8"><![CDATA[
+            <!-- Recurring profile options -->
+<td class="text-right">{{ entry_option_recurring }}</td>
+<!-- Recurring profile options-->
+            ]]>            </add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[<td class="text-right"><button type="button" onclick="$(this).tooltip('destroy');$('#option-value-row{{ option_value_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>]]></search>
+            <add position="before"><![CDATA[
+			<!-- Recurring profile options-->
+
+<td class="text-left"><select name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][recurring_id]" class="form-control">
+                    
+                {% if recurrings %}
+
+                    {% for recurring_profile in recurrings %}
+
+                    {% if recurring_profile.recurring_id == product_option_value.recurring_id %}
+
+
+                    <option value="{{ recurring_profile.recurring_id }}" selected="selected">{{ recurring_profile.name }}</option>
+
+
+                    {% else %}
+
+
+                    <option value="{{ recurring_profile.recurring_id }}">{{ recurring_profile.name }}</option>
+
+
+                    {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+
+                </select>
+</td>
+
+<!-- Recurring profile options--> 
+                
+			]]>            </add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[html += '        <td class="text-right">{{ entry_weight }}</td>';]]></search>
+            <add position="after"><![CDATA[
+			<!-- Recurring profile options-->
+			html += '        <td class="text-right">{{ entry_option_recurring }}</td>';
+			<!-- Recurring profile options-->
+			]]>            </add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[html += '  <input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][weight]" value="" placeholder="{{ entry_weight }}" class="form-control" /></td>';]]></search>
+            <add position="after"><![CDATA[
+            <!-- Recurring profile options-->
+   html += '<td class="text-left"><select name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][recurring_id]" class="form-control"><!-- Options populated dynamically --></select></td>';
+            ]]>            </add>
+        </operation>
+
+
+        <operation error="skip">
+            <search><![CDATA[colspan="6"]]></search>
+            <add position="replace"><![CDATA[colspan="7"]]></add>
+        </operation>
+
+    </file>
+
+    <file path="admin/model/catalog/product.php">
+        <operation error="log">
+            <search><![CDATA[$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_value SET product_option_id = '" . (int)$product_option_id . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', option_value_id = '" . (int)$product_option_value['option_value_id'] . "', quantity = '" . (int)$product_option_value['quantity'] . "', subtract = '" . (int)$product_option_value['subtract'] . "', price = '" . (float)$product_option_value['price'] . "', price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', points = '" . (int)$product_option_value['points'] . "', points_prefix = '" . $this->db->escape($product_option_value['points_prefix']) . "', weight = '" . (float)$product_option_value['weight'] . "', weight_prefix = '" . $this->db->escape($product_option_value['weight_prefix']) . "'");]]></search>
+            <add position="after"><![CDATA[
+    // Recurring profile options
+    $product_option_value_id = $this->db->getLastId();
+
+    $this->log->write("Executing INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping with product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "'");
+    $this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "'");
+    // Recurring profile options
+]]>            </add>
+
+        </operation>
+    </file>
+
+</modification>
