@@ -130,9 +130,15 @@
         ]]>            </search>
             <add position="after"><![CDATA[
            // Recurring profile options
-		$product_option_value_id = $this->db->getLastId();
-        $this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "' ON DUPLICATE KEY UPDATE recurring_id = VALUES(recurring_id)");
-        // Recurring profile options
+							$product_option_value_id = $this->db->getLastId();
+
+							// Log variables before query
+							$this->log->write("About to insert into product_option_recurring_mapping: product_id= " . $product_id . ", option_value_id= " . $product_option_value_id . ", recurring_id= " . $product_option_value['recurring_id']);
+
+							$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "' ON DUPLICATE KEY UPDATE recurring_id = VALUES(recurring_id)");
+
+							// Log success
+							$this->log->write("Successfully inserted into product_option_recurring_mapping.");
         ]]>            </add>
         </operation>
 
