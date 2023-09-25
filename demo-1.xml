@@ -26,6 +26,18 @@
         </operation>
     </file>
 
+    <file path="admin/model/catalog/product.php">
+        <operation error="skip">
+            <search><![CDATA[public function getTotalProductsByLayoutId($layout_id) {]]></search>
+            <add position="before"><![CDATA[
+        // Recurring
+        public function getRecurringProfile($product_option_value_id) {
+            // your database query logic here
+        }
+        ]]>            </add>
+        </operation>
+    </file>
+
     <file path="admin/view/template/catalog/product_form.twig">
         <operation error="log">
             <search><![CDATA[<table id="option-value{{ option_row }}" class="table table-striped table-bordered table-hover">]]></search>
@@ -101,51 +113,32 @@
         <operation error="log">
             <search><![CDATA[$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_value SET product_option_id = '" . (int)$product_option_id . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', option_value_id = '" . (int)$product_option_value['option_value_id'] . "', quantity = '" . (int)$product_option_value['quantity'] . "', subtract = '" . (int)$product_option_value['subtract'] . "', price = '" . (float)$product_option_value['price'] . "', price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', points = '" . (int)$product_option_value['points'] . "', points_prefix = '" . $this->db->escape($product_option_value['points_prefix']) . "', weight = '" . (float)$product_option_value['weight'] . "', weight_prefix = '" . $this->db->escape($product_option_value['weight_prefix']) . "'");]]></search>
             <add position="after"><![CDATA[
-            // Recurring profile options
-    
-            $product_option_value_id = $this->db->getLastId();
+    // Recurring profile options
+    $product_option_value_id = $this->db->getLastId();
+$this->log->write("About to insert into product_option_recurring_mapping: product_id= " . $product_id . ", option_value_id= " . $product_option_value_id . ", recurring_id= " . $product_option_value['recurring_id']);
 
-            $this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "'");
+    $this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "'");
     
-            // Recurring profile options
-            ]]>            </add>
+    if ($this->db->error) {
+    $this->log->write("DB Error: " . $this->db->error);
+}
+    
+    // Recurring profile options
+]]>            </add>
 
         </operation>
 
         <operation error="log">
-            <search ><![CDATA[
-            $this->db->query("INSERT INTO " . DB_PREFIX . "product_option_value SET product_option_value_id = '" . (int)$product_option_value['product_option_value_id'] . "', product_option_id = '" . (int)$product_option_id . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', option_value_id = '" . (int)$product_option_value['option_value_id'] . "', quantity = '" . (int)$product_option_value['quantity'] . "', subtract = '" . (int)$product_option_value['subtract'] . "', price = '" . (float)$product_option_value['price'] . "', price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', points = '" . (int)$product_option_value['points'] . "', points_prefix = '" . $this->db->escape($product_option_value['points_prefix']) . "', weight = '" . (float)$product_option_value['weight'] . "', weight_prefix = '" . $this->db->escape($product_option_value['weight_prefix']) . "'");
+            <search position="replace" index="0"><![CDATA[
+            if (isset($data['product_option'])) {
         ]]>            </search>
-            <add position="after"><![CDATA[
-           // Recurring profile options
-							$product_option_value_id = $this->db->getLastId();
-
-							// Log variables before query
-							$this->log->write("About to insert into product_option_recurring_mapping: product_id= " . $product_id . ", option_value_id= " . $product_option_value_id . ", recurring_id= " . $product_option_value['recurring_id']);
-
-							$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_recurring_mapping SET product_id = '" . (int)$product_id . "', option_value_id = '" . (int)$product_option_value_id . "', recurring_id = '" . (int)$product_option_value['recurring_id'] . "' ON DUPLICATE KEY UPDATE recurring_id = VALUES(recurring_id)");
-
-							// Log success
-							$this->log->write("Successfully inserted into product_option_recurring_mapping.");
+            <add><![CDATA[
+            $this->log->write(json_encode($data['product_option']));
+            if (isset($data['product_option'])) {
         ]]>            </add>
         </operation>
 
-        <operation error="skip">
-            <search><![CDATA[public function getTotalProductsByLayoutId($layout_id) {]]></search>
-            <add position="before"><![CDATA[
-                    // Recurring
-                    public function getRecurringProfile($product_option_value_id) {
-                        $query = $this->db->query("SELECT recurring_id FROM " . DB_PREFIX . "product_option_recurring_mapping WHERE option_value_id = '" . (int)$product_option_value_id . "'");
 
-                        if ($query->num_rows) {
-                            return $query->row['recurring_id'];
-                        } else {
-                            return false;
-                        }
-                    }
-                ]]>
-            </add>
-        </operation>
     </file>
 
 </modification>
