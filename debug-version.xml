@@ -131,21 +131,51 @@
         </operation>
 
         <operation error="skip">
-            <search><![CDATA[public function getTotalProductsByLayoutId($layout_id) {]]></search>
+            <search><![CDATA[public function getTotalProductsByLayoutId($layout_id)]]></search>
             <add position="before"><![CDATA[
-                    // Recurring
-                    public function getRecurringProfile($product_option_value_id) {
-                        $query = $this->db->query("SELECT recurring_id FROM " . DB_PREFIX . "product_option_recurring_mapping WHERE option_value_id = '" . (int)$product_option_value_id . "'");
+                // Recurring
+public function getRecurringProfile($product_option_value_id) {
+    // Logging the call to this function to see if it gets executed.
+    $this->log->write("getRecurringProfile called with product_option_value_id: " . $product_option_value_id);
+    
+    // Execute the database query
+    $query = $this->db->query("SELECT recurring_id FROM " . DB_PREFIX . "product_option_recurring_mapping WHERE option_value_id = '" . (int)$product_option_value_id . "'");
+    
+    // Log the number of rows returned by the query
+    $this->log->write("Query returned " . $query->num_rows . " rows.");
 
-                        if ($query->num_rows) {
-                            return $query->row['recurring_id'];
-                        } else {
-                            return false;
-                        }
-                    }
+    // If rows are returned, log the data and return the recurring_id
+    if ($query->num_rows) {
+        $this->log->write("Returned recurring_id: " . $query->row['recurring_id']);
+        return $query->row['recurring_id'];
+    } else {
+        // Log that no rows matched the criteria
+        $this->log->write("No matching data found for product_option_value_id: " . $product_option_value_id);
+        return false;
+    }
+}
+
                 ]]>
             </add>
         </operation>
+
+        <operation error="skip">
+            <search><![CDATA[foreach ($product_option_value_query->rows as $product_option_value) {]]></search>
+            <add position="after"><![CDATA[
+                // Recurring profile options
+                $recurring_id = $this->getRecurringProfile($product_option_value['product_option_value_id']);        
+                ]]>
+            </add>
+        </operation>
+
+        <operation error="skip">
+            <search><![CDATA['points_prefix'           => $product_option_value['points_prefix'],]]></search>
+            <add position="after"><![CDATA[
+                // Recurring profile options                                       
+                'recurring_id' => $recurring_id,        
+                ]]>
+            </add>
+        </operation>   
     </file>
 
 </modification>
